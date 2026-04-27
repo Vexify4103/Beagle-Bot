@@ -50,7 +50,7 @@ export async function refreshNicknames(channel: VoiceChannel): Promise<void> {
 			const base = entry.originalNick ?? member.user.displayName;
 			const nick = `#${i + 1} | ${base}`.slice(0, 32);
 			if (member.nickname !== nick) {
-				await member.setNickname(nick).catch(() => null);
+				await member.setNickname(nick, `Queue position updated to #${i + 1}`).catch(() => null);
 			}
 		})
 	);

@@ -20,7 +20,7 @@ export async function execute(oldState: VoiceState, newState: VoiceState): Promi
 		const originalNick = queue.remove(member.id);
 		if (originalNick !== undefined) {
 			// null = had no custom nickname, restores to username
-			await member.setNickname(originalNick).catch(() => null);
+			await member.setNickname(originalNick, 'Left the stream queue').catch(() => null);
 		}
 
 		const channel = oldState.guild.channels.cache.get(queueChannelId);
