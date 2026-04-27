@@ -1,4 +1,4 @@
-import { Events, VoiceChannel } from 'discord.js';
+import { ActivityType, Events, VoiceChannel } from 'discord.js';
 import type { Client } from 'discord.js';
 import { readConfig } from '../utils/storage';
 import * as queue from '../utils/queue';
@@ -10,6 +10,11 @@ export const once = true;
 export async function execute(client: Client<true>): Promise<void> {
 	console.log(`Ready! Logged in as ${client.user.tag}`);
 	await deployCommands();
+
+	client.user.setPresence({
+		status: 'online',
+		activities: [{ name: 'twitch.tv/mcdev_tv', type: ActivityType.Watching }],
+	});
 
 	const { queueChannelId } = readConfig();
 	if (!queueChannelId) return;
