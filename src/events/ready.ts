@@ -2,12 +2,14 @@ import { Events, VoiceChannel } from 'discord.js';
 import type { Client } from 'discord.js';
 import { readConfig } from '../utils/storage';
 import * as queue from '../utils/queue';
+import { deployCommands } from '../utils/deployCommands';
 
 export const name = Events.ClientReady;
 export const once = true;
 
 export async function execute(client: Client<true>): Promise<void> {
   console.log(`Ready! Logged in as ${client.user.tag}`);
+  await deployCommands();
 
   const { queueChannelId } = readConfig();
   if (!queueChannelId) return;
