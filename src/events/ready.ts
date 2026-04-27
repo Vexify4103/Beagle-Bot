@@ -8,22 +8,22 @@ export const name = Events.ClientReady;
 export const once = true;
 
 export async function execute(client: Client<true>): Promise<void> {
-  console.log(`Ready! Logged in as ${client.user.tag}`);
-  await deployCommands();
+	console.log(`Ready! Logged in as ${client.user.tag}`);
+	await deployCommands();
 
-  const { queueChannelId } = readConfig();
-  if (!queueChannelId) return;
+	const { queueChannelId } = readConfig();
+	if (!queueChannelId) return;
 
-  const channel = await client.channels.fetch(queueChannelId).catch(() => null);
-  if (!(channel instanceof VoiceChannel) || channel.members.size === 0) return;
+	const channel = await client.channels.fetch(queueChannelId).catch(() => null);
+	if (!(channel instanceof VoiceChannel) || channel.members.size === 0) return;
 
-  // Re-populate queue from whoever is already in the channel.
-  // Join order among pre-existing members is unknown after a restart,
-  // so they're added in the order Discord returns them (roughly join order).
-  for (const [, member] of channel.members) {
-    queue.add(member);
-  }
+	// Re-populate queue from whoever is already in the channel.
+	// Join order among pre-existing members is unknown after a restart,
+	// so they're added in the order Discord returns them (roughly join order).
+	for (const [, member] of channel.members) {
+		queue.add(member);
+	}
 
-  await queue.refreshNicknames(channel);
-  console.log(`Restored queue for ${queue.size()} member(s) in #${channel.name}`);
+	await queue.refreshNicknames(channel);
+	console.log(`Restored queue for ${queue.size()} member(s) in #${channel.name}`);
 }
