@@ -6,6 +6,9 @@ const configPath = path.join(dataDir, 'config.json');
 
 export interface Config {
 	queueChannelId: string | null;
+	stickyChannelId: string | null;
+	stickyEmbedData: Record<string, unknown> | null;
+	stickyContent: string | null;
 }
 
 function ensureDir(): void {
@@ -17,7 +20,7 @@ export function readConfig(): Config {
 	try {
 		return JSON.parse(fs.readFileSync(configPath, 'utf8')) as Config;
 	} catch {
-		return { queueChannelId: null };
+		return { queueChannelId: null, stickyChannelId: null, stickyEmbedData: null, stickyContent: null };
 	}
 }
 

@@ -5,7 +5,7 @@ import path from 'node:path';
 import type { BotClient, Command } from './types';
 
 const client = new Client({
-	intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
+	intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
 }) as BotClient;
 
 client.commands = new Collection();
