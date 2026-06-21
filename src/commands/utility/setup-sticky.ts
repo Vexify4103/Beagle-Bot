@@ -89,7 +89,7 @@ const command: Command = {
 
 		const changed = previous && previous !== channel.id ? ` (was <#${previous}>)` : '';
 		await interaction.reply({
-			content: `Sticky message set to <#${channel.id}>${changed}. It will re-post after 600 seconds of inactivity.`,
+			content: `Sticky message set to <#${channel.id}>${changed}. It will re-post after 600 seconds of inactivity or 300 messages.`,
 			flags: [MessageFlags.Ephemeral],
 		});
 	},

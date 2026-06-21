@@ -3,9 +3,12 @@ import type { Client } from 'discord.js';
 import { readConfig } from './storage';
 
 const STICKY_TIMEOUT_MS = 600_000; // 600 seconds
+const STICKY_MESSAGE_THRESHOLD = 300;
 
 let stickyTimer: ReturnType<typeof setTimeout> | null = null;
 let lastStickyMessageId: string | null = null;
+let messagesSinceLastSticky = 0;
+let stickyRefreshInProgress = false;
 
 export function sanitizeEmbedData(data: Record<string, unknown>): Record<string, unknown> {
 	const clean: Record<string, unknown> = {};
@@ -67,28 +70,60 @@ async function sendSticky(channel: TextChannel): Promise<void> {
 	lastStickyMessageId = msg.id;
 }
 
-function fireSticky(client: Client): void {
+async function refreshSticky(client: Client): Promise<void> {
+	if (stickyRefreshInProgress) return;
+
 	const config = readConfig();
 	if (!config.stickyChannelId) return;
 
-	stickyTimer = null;
+	stickyRefreshInProgress = true;
+	const messageCountAtRefreshStart = messagesSinceLastSticky;
 
-	client.channels
-		.fetch(config.stickyChannelId)
-		.then((ch) => {
-			if (!(ch instanceof TextChannel)) return;
-			return deleteLastSticky(ch).then(() => sendSticky(ch));
-		})
-		.catch(() => null);
+	try {
+		const channel = await client.channels.fetch(config.stickyChannelId);
+		if (!(channel instanceof TextChannel)) return;
+
+		await deleteLastSticky(channel);
+		await sendSticky(channel);
+		// Keep messages received while the sticky was being replaced so none are lost.
+		messagesSinceLastSticky = Math.max(0, messagesSinceLastSticky - messageCountAtRefreshStart);
+	} catch {
+		// Channel inaccessible or message permissions unavailable.
+	} finally {
+		stickyRefreshInProgress = false;
+		if (messagesSinceLastSticky >= STICKY_MESSAGE_THRESHOLD) {
+			void refreshSticky(client);
+		} else {
+			startStickyTimer(client);
+		}
+	}
 }
 
 export function startStickyTimer(client: Client): void {
-	stopStickyTimer();
-	stickyTimer = setTimeout(() => fireSticky(client), STICKY_TIMEOUT_MS);
+	if (stickyTimer) clearTimeout(stickyTimer);
+	stickyTimer = setTimeout(() => {
+		stickyTimer = null;
+		void refreshSticky(client);
+	}, STICKY_TIMEOUT_MS);
 }
 
 export function resetStickyTimer(client: Client): void {
 	startStickyTimer(client);
+}
+
+export function recordStickyMessage(client: Client): void {
+	messagesSinceLastSticky += 1;
+
+	if (messagesSinceLastSticky >= STICKY_MESSAGE_THRESHOLD) {
+		if (stickyTimer) {
+			clearTimeout(stickyTimer);
+			stickyTimer = null;
+		}
+		void refreshSticky(client);
+		return;
+	}
+
+	resetStickyTimer(client);
 }
 
 export function stopStickyTimer(): void {
@@ -97,11 +132,13 @@ export function stopStickyTimer(): void {
 		stickyTimer = null;
 	}
 	lastStickyMessageId = null;
+	messagesSinceLastSticky = 0;
 }
 
 export async function sendInitialSticky(channel: TextChannel): Promise<void> {
 	await deleteLastSticky(channel);
 	await sendSticky(channel);
+	messagesSinceLastSticky = 0;
 }
 
 export function getLastStickyMessageId(): string | null {
