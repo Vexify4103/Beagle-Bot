@@ -1,8 +1,7 @@
 import { SlashCommandBuilder, ChannelType, PermissionFlagsBits, MessageFlags, EmbedBuilder, TextChannel } from 'discord.js';
 import type { ChatInputCommandInteraction } from 'discord.js';
 import { readConfig, writeConfig } from '../../utils/storage';
-import { sendInitialSticky } from '../../utils/sticky';
-import { sanitizeEmbedData } from '../../utils/sticky';
+import { sanitizeEmbedData, sendInitialSticky, STICKY_MESSAGE_THRESHOLD, STICKY_TIMEOUT_MS } from '../../utils/sticky';
 import type { Command } from '../../types';
 
 async function fetchSourceBin(url: string): Promise<string> {
@@ -89,7 +88,7 @@ const command: Command = {
 
 		const changed = previous && previous !== channel.id ? ` (was <#${previous}>)` : '';
 		await interaction.reply({
-			content: `Sticky message set to <#${channel.id}>${changed}. It will re-post after 600 seconds of inactivity or 300 messages.`,
+			content: `Sticky message set to <#${channel.id}>${changed}. It will re-post after ${STICKY_TIMEOUT_MS / 1000} seconds of inactivity or ${STICKY_MESSAGE_THRESHOLD} messages.`,
 			flags: [MessageFlags.Ephemeral],
 		});
 	},
